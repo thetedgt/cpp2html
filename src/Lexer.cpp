@@ -103,6 +103,19 @@ Tokenizer::Tokenizer(const char* code) :
     keywords["while"]           = TokenType::WHILE;
     keywords["xor"]             = TokenType::XOR;
     keywords["xor_eq"]          = TokenType::XOR_EQ;
+    
+    preprocessors["#define"]    = TokenType::PRE_DEFINE;
+    preprocessors["#undef"]     = TokenType::PRE_UNDEF;
+    preprocessors["#include"]   = TokenType::PRE_INCLUDE;
+    preprocessors["#if"]        = TokenType::PRE_IF;
+    preprocessors["#ifdef"]     = TokenType::PRE_IFDEF;
+    preprocessors["#ifndef"]    = TokenType::PRE_IFNDEF;
+    preprocessors["#else"]      = TokenType::PRE_ELSE;
+    preprocessors["#elif"]      = TokenType::PRE_ELIF;
+    preprocessors["#endif"]     = TokenType::PRE_ENDIF;
+    preprocessors["#line"]      = TokenType::PRE_LINE;
+    preprocessors["#error"]     = TokenType::PRE_ERROR;
+    preprocessors["#pragma"]    = TokenType::PRE_PRAGMA;
 }
 
 bool Tokenizer::isAtEOF() const
@@ -256,8 +269,8 @@ std::string Tokenizer::parseString()
         return "";
     }
 
-    char bound = code[codeIndex];
-    unsigned start = codeIndex;
+    const char bound = code[codeIndex];
+    const unsigned start = codeIndex;
 
     nextSymbol();
     while(true)
@@ -319,6 +332,36 @@ Token Tokenizer::parseKeyword()
     return produceToken(keyword->second, keyword->first);
 }
 
+Token Tokenizer::parsePreprocessor()
+{
+    // not a preprocessor
+    if(code[codeIndex] != '#')
+    {
+        state = State::FAIL;
+        return produceToken(TokenType::INVALID);
+    }
+    
+    const unsigned start = codeIndex;
+    nextSymbol();
+    while(isLowerCase(code[codeIndex]))
+    {
+        nextSymbol();
+    }
+    
+    const std::string key = std::string(code, start, codeIndex-start);
+    const auto preproc = preprocessors.find(key);
+    
+    if(preproc == preprocessors.end())
+    {
+        column -= codeIndex-start;
+        codeIndex = start;
+        state = State::FAIL;
+        return produceToken(TokenType::INVALID);
+    }
+    state = State::SUCCESS;
+    return produceToken(preproc->second, preproc->first);
+}
+
 std::string Tokenizer::parseIdentifier()
 {
     if(!isLowerCase(code[codeIndex]) && !isCapitalCase(code[codeIndex]) && code[codeIndex] != '_')
@@ -327,7 +370,7 @@ std::string Tokenizer::parseIdentifier()
         return "";
     }
 
-    unsigned start = codeIndex;
+    const unsigned start = codeIndex;
 
     nextSymbol();
     while(isLowerCase(code[codeIndex]) || isCapitalCase(code[codeIndex]) ||
@@ -412,6 +455,13 @@ Token Tokenizer::nextToken()
     if(isStateSuccess())
     {
         return produceToken(TokenType::COMMENT, comment);
+    }
+    
+    // preprocessors
+    Token preproc = parsePreprocessor();
+    if(isStateSuccess())
+    {
+        return preproc;
     }
 
     switch(code[codeIndex])

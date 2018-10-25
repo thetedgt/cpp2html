@@ -143,6 +143,20 @@ enum TokenType
     WHILE,
     XOR,
     XOR_EQ,
+    
+    // preprocessors
+    PRE_DEFINE,
+    PRE_UNDEF,
+    PRE_INCLUDE,
+    PRE_IF,
+    PRE_IFDEF,
+    PRE_IFNDEF,
+    PRE_ELSE,
+    PRE_ELIF,
+    PRE_ENDIF,
+    PRE_LINE,
+    PRE_ERROR,
+    PRE_PRAGMA,
 
     NUMBER,
     IDENTIFIER,
@@ -176,6 +190,7 @@ private:
     unsigned codeIndex;
     State state;
     std::map<std::string, TokenType> keywords;
+    std::map<std::string, TokenType> preprocessors;
 
 public:
     Tokenizer(const char* code);
@@ -193,6 +208,7 @@ public:
     std::string parseComment();
     std::string parseString();
     Token parseKeyword();
+    Token parsePreprocessor();
     std::string parseIdentifier();
 
     void skipWhiteSpaces();

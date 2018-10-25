@@ -38,6 +38,10 @@ void cpp2html(std::vector<Token> &tokens, const char* code)
                             "      color: gray;\n"
                             "      font-style: italic;\n"
                             "    }\n\n"
+                            "    .preprocessor {\n"
+                            "      color: green;\n"
+                            "      font-weight: bold;\n"
+                            "    }\n\n"
                             "  </style>\n"
                             "</head>\n"
                             "<body>\n";
@@ -72,6 +76,10 @@ void cpp2html(std::vector<Token> &tokens, const char* code)
         {
             out << "<span class=\"keyword\">" << tokens[i].lexeme <<"</span>";
         }
+        else if(tokens[i].type <= TokenType::PRE_PRAGMA)
+        {
+            out << "<span class=\"preprocessor\">" << tokens[i].lexeme <<"</span>";
+        }
         else
         {
             out << tokens[i].lexeme;
@@ -84,7 +92,7 @@ void cpp2html(std::vector<Token> &tokens, const char* code)
 
 int main()
 {
-    char code[] = "bool isCapitalCase(char c)\n{\n    return c >= 'A' && c <= 'Z';\n}\nm_KeyWordsTable[\"break\"] = TokenType::Break;\n// this is a comment test\n"
+    char code[] = "#include<iostream>\nbool isCapitalCase(char c)\n{\n    return c >= 'A' && c <= 'Z';\n}\nm_KeyWordsTable[\"break\"] = TokenType::Break;\n// this is a comment test\n"
                     "/* another one */";
     Tokenizer tokenizer(code);
     std::vector<Token> tokens;
